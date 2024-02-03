@@ -1,3 +1,6 @@
+// Load environment variables from .env file
+require('dotenv').config();
+
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
@@ -9,51 +12,41 @@ const port = 3001;
 app.use(cors());
 app.use(bodyParser.json());
 
-// Function to fetch coffee data from the external API
-const getCoffeeData = async () => {
+// Function to handle sending a message to OpenAI's GPT model
+const sendMessageHandler = async (req, res) => {
+  let data = JSON.stringify({
+    "model": "gpt-3.5-turbo",
+    "messages": [{
+      "role": "user",
+      "content": req.body.message
+    }]
+  });
+
+  let config = {
+    method: 'post',
+    url: 'https://api.openai.com/v1/chat/completions',
+    headers: { 
+      'Content-Type': 'application/json', 
+      // Use environment variable for the API key
+      'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+    },
+    data: data
+  };
+
   try {
-    const response = await axios.get('https://api.sampleapis.com/coffee/hot');
-    return response.data;
+    const response = await axios.request(config);
+    // Assuming the structure of response from OpenAI API is correct and consistent
+    // Adjust the following line if the structure is different
+    const botMessage = response.data.choices[0].message.content;
+    res.json({ botMessage: botMessage });
   } catch (error) {
-    console.error('Error fetching coffee data:', error.message);
-    throw new Error('Error fetching coffee data');
+    console.error('Error sending message to GPT:', error);
+    res.status(500).send('Error sending message to GPT');
   }
 };
 
-// Function to handle sending a message to the custom GPT model
-const sendMessageHandler = (req, res) => {
-  const { message } = req.body;
-
-  // Assuming you want to acknowledge the receipt of the message
-  res.json({ acknowledgement: 'Message received successfully', userMessage: message });
-};
-
-// Endpoint to handle sending a message to the custom GPT model
+// Endpoint to handle sending a message to OpenAI's GPT model
 app.post('/sendMessage', sendMessageHandler);
-
-// Function to retrieve a response from the custom GPT model based on user message
-const getResponseHandler = async (req, res) => {
-  try {
-    const coffeeData = await getCoffeeData();
-    const userMessage = req.query.message.toLowerCase();
-
-    // Find a response that matches the user's message
-    const matchedCoffee = coffeeData.find((coffee) => coffee.title.toLowerCase().includes(userMessage));
-
-    if (matchedCoffee) {
-      res.json({ responseMessage: matchedCoffee });
-    } else {
-      // If no match found, send a default response
-      const randomCoffee = coffeeData[Math.floor(Math.random() * coffeeData.length)];
-      res.json({ responseMessage: randomCoffee });
-    }
-  } catch (error) {
-    res.status(500).send('Error getting response');
-  }
-};
-
-// Endpoint to retrieve a response from the custom GPT model
-app.get('/getResponse', getResponseHandler);
 
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
