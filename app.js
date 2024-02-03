@@ -1,6 +1,3 @@
-// Load environment variables from .env file
-require('dotenv').config();
-
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
@@ -27,8 +24,7 @@ const sendMessageHandler = async (req, res) => {
     url: 'https://api.openai.com/v1/chat/completions',
     headers: { 
       'Content-Type': 'application/json', 
-      // Use environment variable for the API key
-      'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+      'Authorization': 'Bearer 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'
     },
     data: data
   };
@@ -40,7 +36,7 @@ const sendMessageHandler = async (req, res) => {
     const botMessage = response.data.choices[0].message.content;
     res.json({ botMessage: botMessage });
   } catch (error) {
-    console.error('Error sending message to GPT:', error);
+    console.error('Error sending message to GPT:', error.response.data);
     res.status(500).send('Error sending message to GPT');
   }
 };
