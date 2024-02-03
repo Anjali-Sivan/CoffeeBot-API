@@ -24,7 +24,7 @@ const sendMessageHandler = async (req, res) => {
     url: 'https://api.openai.com/v1/chat/completions',
     headers: { 
       'Content-Type': 'application/json', 
-      'Authorization': 'Bearer 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'
+      'Authorization': 'Bearer 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'
     },
     data: data
   };
